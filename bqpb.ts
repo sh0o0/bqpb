@@ -11,8 +11,6 @@ function format(value: JSONValue): JSONValue {
         return v;
       } else if (type.startsWith("int")) {
         return parseInt(v);
-      } else if (type.startsWith("bytes")) {
-        return decodeUTF8(decodeBase64(v));
       } else {
         return `${type}:${value}`;
       }
@@ -27,9 +25,6 @@ function format(value: JSONValue): JSONValue {
       return value;
   }
 }
-
-
-
 
 export function decodeBase64(b64: string): Uint8Array {
   const bLength = (b64 + "=").indexOf("=");
@@ -106,8 +101,8 @@ export function decodeUTF8(bytes: Uint8Array): string {
     return decodeURIComponent(
       Array.from(bytes).map((b) => `%${b.toString(16).padStart(2, "0")}`).join(""),
     );
-  } catch (e) {
-    throw new Error(`Invalid UTF-8 sequence: ${e}`);
+  } catch (_e) {
+    throw new Error("Invalid UTF-8 sequence");
   }
 }
 
