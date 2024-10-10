@@ -1,3 +1,34 @@
+export function customParse(input: string): JSONValue {
+  const parsed = parse(input, "", {});
+  return format(parsed);
+}
+
+function format(value: JSONValue): JSONValue {
+  switch (typeof value) {
+    case "string":
+      const [prefix, type, v] = value.split(":");
+      if (type.startsWith("string")) {
+        return v;
+      } else if (type.startsWith("int")) {
+        return parseInt(v);
+      } else {
+        return `${type}:${value}`;
+      }
+    case "object":
+      if (Array.isArray(value)) {
+        return value.map((v) => format(v));
+      } else {
+        const entries = Object.entries(value as Record<string, JSONValue>);
+        return Object.fromEntries(entries.map(([k, v]) => [k, format(v)]));
+      }
+    default:
+      return value;
+  }
+}
+
+
+
+
 export function decodeBase64(b64: string): Uint8Array {
   const bLength = (b64 + "=").indexOf("=");
   const length = (bLength * 0.75) | 0;
@@ -368,18 +399,17 @@ function interpretGenericWire(
         const scalarType = field.w === 1
           ? "double"
           : field.w === 5
-          ? "float"
-          : field.v < 0x100000000n
-          ? "int32"
-          : "int64";
-        return `unknown:${scalarType}:${
-          interpretOne(
-            field,
-            getType(scalarType, typedefs),
-            scalarType,
-            typedefs,
-          )
-        }`;
+            ? "float"
+            : field.v < 0x100000000n
+              ? "int32"
+              : "int64";
+        return `unknown:${scalarType}:${interpretOne(
+          field,
+          getType(scalarType, typedefs),
+          scalarType,
+          typedefs,
+        )
+          }`;
       }
     });
     result[`#${f}`] = repr.length === 1 ? repr[0] : repr;
@@ -511,8 +541,8 @@ function interpretOne(
     const expectedWireType = typeDesc < THRESHOLD_VARINT
       ? 0
       : typeDesc < THRESHOLD_I32
-      ? 5
-      : 1;
+        ? 5
+        : 1;
     if (fieldData.w !== expectedWireType) {
       throw new Error(
         `Expected wire type ${expectedWireType}, got ${fieldData.w}`,
@@ -536,11 +566,11 @@ function interpretOne(
     const value = isZigZagType(typeDesc)
       ? (fieldData.v >> 1n) ^ -(fieldData.v & 1n)
       : isSigned(typeDesc)
-      ? is64BitType(typeDesc)
-        ? (fieldData.v & 0xFFFFFFFFFFFFFFFFn) -
+        ? is64BitType(typeDesc)
+          ? (fieldData.v & 0xFFFFFFFFFFFFFFFFn) -
           (((fieldData.v >> 63n) & 1n) << 64n)
-        : (fieldData.v & 0xFFFFFFFFn) - (((fieldData.v >> 31n) & 1n) << 32n)
-      : fieldData.v;
+          : (fieldData.v & 0xFFFFFFFFn) - (((fieldData.v >> 31n) & 1n) << 32n)
+        : fieldData.v;
     if (is64BitType(typeDesc)) {
       return String(value);
     } else {
