@@ -6,11 +6,13 @@ export function customParse(input: string): JSONValue {
 function format(value: JSONValue): JSONValue {
   switch (typeof value) {
     case "string":
-      const [prefix, type, v] = value.split(":");
+      const [, type, v] = value.split(":");
       if (type.startsWith("string")) {
         return v;
       } else if (type.startsWith("int")) {
         return parseInt(v);
+      } else if (type.startsWith("bytes")) {
+        return decodeUTF8(decodeBase64(v));
       } else {
         return `${type}:${value}`;
       }
@@ -102,10 +104,10 @@ export function decodeUTF8(bytes: Uint8Array): string {
   try {
     // Caveat: this function silently substitutes stray surrogates with U+FFFD.
     return decodeURIComponent(
-      Array.from(bytes).map((b) => `%${b.toString(16)}`).join(""),
+      Array.from(bytes).map((b) => `%${b.toString(16).padStart(2, "0")}`).join(""),
     );
-  } catch (_e) {
-    throw new Error("Invalid UTF-8 sequence");
+  } catch (e) {
+    throw new Error(`Invalid UTF-8 sequence: ${e}`);
   }
 }
 
