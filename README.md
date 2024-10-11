@@ -33,7 +33,8 @@ bqpb is a **self-contained, yet feature-complete** parser for the [Protocol Buff
 
 ### Usage
 
-Paste SQL to BigQuery from pqpb.sql
+Paste SQL to BigQuery from bqpb.sql.
+For terraform, bqpb.tf.sql.
 
 ### API Reference
 

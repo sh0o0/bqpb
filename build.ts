@@ -63,6 +63,17 @@ ${minifyResult.code}
 `,
 );
 
+await Deno.writeTextFile(
+  "bqpb.tf.sql",
+  `// From https://github.com/sh0o0/bqpb
+${escapeForTerraform(minifyResult.code)}
+`,
+);
+
+function escapeForTerraform(s: string): string {
+  return s.replaceAll(/\$\{/g, '$$$${');
+}
+
 type FunctionalizeOptions = {
   exportName: string;
   args: string[];
